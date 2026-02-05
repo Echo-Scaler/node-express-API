@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Management App</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Markdown support -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-content">
+          <h1 class="app-title">
+            <svg
+              class="app-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M9 11l3 3L22 4"></path>
+              <path
+                d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"
+              ></path>
+            </svg>
+            Task Manager
+          </h1>
+          <p class="app-subtitle">Organize your work efficiently</p>
+        </div>
+        <div class="stats">
+          <div class="stat-card">
+            <span class="stat-value" id="totalTasks">0</span>
+            <span class="stat-label">Total</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="pendingTasks">0</span>
+            <span class="stat-label">Pending</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="completedTasks">0</span>
+            <span class="stat-label">Completed</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Add Task Form -->
+      <div class="add-task-section">
+        <button class="btn btn-primary" id="toggleFormBtn">
+          <svg
+            class="btn-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add New Task
+        </button>
+
+        <div class="form-container" id="taskForm" style="display: none">
+          <h2 class="form-title">Create New Task</h2>
+          <form id="addTaskForm">
+            <div class="form-group">
+              <label for="title">Task Title</label>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                placeholder="Enter task title"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="description">Description <small style="color: var(--gray-400); font-weight: 400;">(Markdown supported)</small></label>
+              <textarea
+                id="description"
+                name="description"
+                rows="5"
+                placeholder="Enter task description (supports **bold**, *italic*, lists, code, etc.)"
+                required
+              ></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" name="status">
+                  <option value="pending">Pending</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="dueDate">Due Date</label>
+                <input type="date" id="dueDate" name="dueDate" />
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">
+                <svg
+                  class="btn-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"
+                  ></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                Save Task
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                id="cancelFormBtn"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="filter-tabs">
+        <button class="tab-btn active" data-filter="all">All Tasks</button>
+        <button class="tab-btn" data-filter="pending">Pending</button>
+        <button class="tab-btn" data-filter="in-progress">In Progress</button>
+        <button class="tab-btn" data-filter="completed">Completed</button>
+      </div>
+
+      <!-- Tasks List -->
+      <div class="tasks-container" id="tasksContainer">
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <p>Loading tasks...</p>
+        </div>
+        <div class="empty-state" id="emptyState" style="display: none">
+          <svg
+            class="empty-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path d="M9 11l3 3L22 4"></path>
+            <path
+              d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"
+            ></path>
+          </svg>
+          <h3>No tasks yet</h3>
+          <p>Click "Add New Task" to create your first task</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="editModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Edit Task</h2>
+          <button class="modal-close" id="closeModal">&times;</button>
+        </div>
+        <form id="editTaskForm">
+          <input type="hidden" id="editTaskId" />
+          <div class="form-group">
+            <label for="editTitle">Task Title</label>
+            <input type="text" id="editTitle" name="title" required />
+          </div>
+
+          <div class="form-group">
+            <label for="editDescription">Description <small style="color: var(--gray-400); font-weight: 400;">(Markdown supported)</small></label>
+            <textarea
+              id="editDescription"
+              name="description"
+              rows="5"
+              placeholder="Supports **bold**, *italic*, lists, code, etc."
+              required
+            ></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editStatus">Status</label>
+              <select id="editStatus" name="status">
+                <option value="pending">Pending</option>
+                <option value="in-progress">In Progress</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="editDueDate">Due Date</label>
+              <input type="date" id="editDueDate" name="dueDate" />
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Update Task</button>
+            <button type="button" class="btn btn-secondary" id="cancelEditBtn">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
